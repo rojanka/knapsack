@@ -34,9 +34,32 @@ knapsack_brute_force <- function(x, W){
 
 }
 
+knapsack_int <- function(x, W){
+  stopifnot((length(x$v)==length(x$w)))
+
+  highestValue = 0
+
+  for(i in 0:(2^(length(x$v))-1)){
+    combination = which(as.logical(intToBits(i)))
+
+    if (sum(x$w[combination])<=W){
+      highestValue=max(c(sum(x$v[combination]), highestValue))
+    }
+
+  }
+
+  return(highestValue)
+
+}
 
 
-knapsack_brute_force(x = knapsack_objects[1:8,], W = 3500)
+a = Sys.time()
+knapsack_brute_force(x = knapsack_objects[1:18,], W = 3500)
+print(Sys.time()-a)
+
+a = Sys.time()
+knapsack_int(x = knapsack_objects[1:18,], W = 3500)
+print(Sys.time()-a)
 
 
 
