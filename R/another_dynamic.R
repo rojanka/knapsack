@@ -1,3 +1,9 @@
+#' @title Dynamic Programming Solution for the Knapsack Problem
+#' @param x a \code{data.frame} with two columns, "w" and "v", indicating the weight and value of items respectively
+#' @param W the maximum weight that the knapsack can hold
+#' @return a \code{list} containing two elements: \code{value} and \code{elements}, representing the maximum value that can be realised with the given knapsack and the indices of the items to be packed in the knapsack for realising maximum value
+#' @export
+
 knapsack_another_dynamic <- function(x, W) {
   
   # check input integrity

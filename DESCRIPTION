@@ -1,14 +1,22 @@
 Package: knapsack
 Type: Package
-Title: What the Package Does (Title Case)
-Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
-License: What license is it under?
-Encoding: UTF-8
-LazyData: true
-Suggests: 
-    testthat
+Title: Implements Slow and Fast solutions to the Knapsack Problem
+Version: 1.0
+Date: 2020-10-07
+Author: Rojan and Shashi
+Maintainer: <shashiniyer@gmail.com>, <rojankarakaya@gmail.com>
+Description: Brute-Force (with and without parallelisation), Dynamic Programming and Greedy solves for the Knapsack Problem.
+License: GPL-3 + file LICENSE
 RoxygenNote: 7.1.1
+Encoding: UTF-8
+Depends: 
+    R (>= 2.10)
+Suggests: 
+    testthat,
+    knitr,
+    rmarkdown
+Imports: 
+    foreach,
+    doParallel,
+    parallel
+VignetteBuilder: knitr
