@@ -1,0 +1,119 @@
+---
+title: "Slow and Fast solves for the Knapsack Problem"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Slow and Fast solves for the Knapsack Problem}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+# Introduction
+The [knapsack problem](https://en.wikipedia.org/wiki/Knapsack_problem)  is a well known problem in Computing. The ["knapsack" package](https://github.com/rojanka/knapsack) implements four different solutions for this problem: two using brute-force methods, one of which uses parallel programming techniques, and the two remaining using dynamic programming and greedy approaches. Each solution is implemented as functions ("package functions") described below.
+
+```{r setup, echo = FALSE}
+library(knapsack)
+```
+
+# Package Function Inputs
+All package functions expect the following two input arguments.
+
+* A _data.frame_ "__x__" with two numeric columns: item weights ("__w__") and item values ("__v__")
+* A _numeric scalar_ "__W__", representing knapsack capacity (the maximum weight it can hold)
+
+Below is an example of a set of suitable arguments.
+
+``` {r}
+set.seed(42)
+n <- 1000000
+x <- data.frame(
+  w=sample(1:4000, size = n, replace = TRUE),
+  v=runif(n = n, 0, 10000)
+)
+W <- 3500
+
+print(x[1:8, ])
+print(W)
+```
+
+# Package Function Outputs
+If no errors are encountered, each package function outputs a list containing two elements:
+
+* __value__: a numeric scalar, which is the maximum value (see note) that can be realised given items and knapsack capacity
+* __elements__: a vector of the indices of items to be included in the knapsack in order to realise the _value_ described above
+
+__Note__: Brute-force and dynamic programming methods are guaranteed to generate a global maximum value, whereas greedy methods generate a local maximum value that are guaranteed, in the worst case, be half the global maximum value. See cited references for more details.
+
+# Package Solutions
+## Function implementing a Brute-Force Solution (without Parallelisation)
+Given _n_ items and a knapsack with capacity _W_, the __knapsack_brute_force__ function goes over each of the _2^n_ possible ways of filling the knapsack, whilst keeping track of the hitherto most optimal solution, and returns outputs as described above. Our implementation, however, does not allow for _n_ to be any larger than 31; this is because of our reliance on the __intToBits__ function, which requires arguments to be integers, which in turn can be no larger than 2^31 - 1 (2,147,483,647) in __R__.
+
+``` {r}
+knapsack_brute_force(x[1:8, ], 3500)
+```
+
+Given its _O(2^n)_ time complexity, this function does not perform optimally in terms of time taken for execution. For n = 16 items and knapsack capacity W = 2000, we can see below the time taken for function execution.
+
+``` {r}
+system.time(knapsack_brute_force(x[1:16, ], 2000))
+```
+
+## Function implenting a Parallelised version of the Brute-Force Solution
+The _knapsack_brute_force_ function described above also takes on an optional argument _'parallel'_ whose value is set to _FALSE_ by default. Forcing it to _TRUE_ however invokes the parallelised version of the above mentioned brute-force solution. If the machine running the function has suitable computing hardware, then despite the function still having time complexity of order _O(2^n)_, parallelisation will deliver significantly faster execution.
+
+``` {r}
+#system.time(knapsack_brute_force(x[1:16, ], 2000, parallel = TRUE))
+```
+
+## Function implementing a Dynamic Programming based Solution
+The dynamic programming approach builds upon solutions to sub-problems. To explore the intuition behind this approach, consider the following thoughts.
+
+In any order, number each item which can potentially be included in the knapsack from 1 to _n_, where _n_ is the total number of items. If _n_ were 1, the optimal tactic would be to include the available item, provided the knapsack has sufficient capacity to accommodate its weight. This could be considered the simplest sub-problem.
+
+Furthermore, in deciding whether or not to include the _i+1-th_ item, we may consider whether the weight __w~i+1~__ of the _i+1-th_ item is larger than the total capacity of the knapsack _W_; in such a case, we cannot possibly pick up the item; otherwise, we have two mutually exclusive scenarios to consider.
+
+### We include the _i+1-th_ item
+This scenario is feasible if and only if the sub-problem of a knapsack with capacity of at most _W - w~i+1~_
+
+### We do _not_ include the _i+1-th_ item
+
+1. Imagine a hypothetical knapsack with capacity __W - w~i+1~__ optimally packed with a combination of the first __i__ items. Let it have optimal value __V~hyp~__.
+
+1. 
+
+
+* if, hypothetically, the optimal tactic is to not pick up the __i+1-th__ item, the optimally packed knapsack would retain the same value as it would if we only had __i__ items to choose from
+* alternatively, if the optimal tactic is to pick the __i+1-th__ item, it could be so if and only if the given knapsack takes value equal to the sum of it's own value and that of another optimal knapsack with capacity _W - w~i+1~_
+
+``` {r}
+knapsack_dynamic(x[1:8, ], 3500)
+```
+
+This function has time complexity in the order of _O(n*W)_, where _n_ is the number of items that can potentially be included in the knapsack and _W_ is the knapsack capacity. One can therefore expect faster execution as compared to Brute Force based implementations. For n = 500 items and knapsack capacity W = 2000, we can see below the time taken for function execution.
+
+``` {r}
+system.time(knapsack_dynamic(x[1:500, ], 2000))
+```
+
+## Function implementing a Greedy Approach
+The greedy approach we have used to solve the knapsack problem consists, as cited in the referenced literature, of sorting the available items in descending order of their value per unit weight and including in the knapsack as many of the top-most items as it can hold. Although this approach may not provide the most optimal solution to the problem, it's solution is guaranteed (as also cited in the referenced material) to generate knapsack value that is at worst half of the maximum possible value it could generate, given the items for potential inclusion.
+
+``` {r}
+greedy_knapsack(x[1:8, ], 3500)
+```
+
+This function has time complexity in the order of _O(n*log(n))_, where _n_ is the number of items that can potentially be included in the knapsack, as the complexity of the sorting operation overwhelms the sum of complexities of all the other operations. One can therefore expect even faster execution as compared to Brute Force based implementations. For the same n = 1,000,000 items and knapsack capacity W = 2000, we can see below the time taken for function execution.
+
+``` {r}
+system.time(greedy_knapsack(x, 2000))
+```
+
+# References
+1. [Wikipedia](https://en.wikipedia.org/wiki/Knapsack_problem)
+1. [Approximation Algorithms I - MIT OpenCourseWare](https://ocw.mit.edu/courses/sloan-school-of-management/15-083j-integer-programming-and-combinatorial-optimization-fall-2009/lecture-notes/MIT15_083JF09_lec21.pdf)
+1. [Greedy Algorithms - MIT OpenCourseWare](https://ocw.mit.edu/courses/civil-and-environmental-engineering/1-204-computer-algorithms-in-systems-engineering-spring-2010/lecture-notes/MIT1_204S10_lec10.pdf)

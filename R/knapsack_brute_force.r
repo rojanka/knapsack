@@ -13,7 +13,7 @@ knapsack_brute_force <- function(x, W, parallel=FALSE){
   stopifnot(W>0)
 
   if (nrow(x) > 31) stop("This implementation cannot handle knapsack
-      problem solves for more than 31 items")
+      problem involving more than 31 items")
 
   if (parallel==TRUE){
     doParallel::registerDoParallel(parallel::detectCores())
