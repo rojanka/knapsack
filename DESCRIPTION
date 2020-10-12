@@ -16,7 +16,6 @@ Suggests:
     knitr,
     rmarkdown
 Imports: 
-    foreach,
-    doParallel,
+    profvis,
     parallel
 VignetteBuilder: knitr

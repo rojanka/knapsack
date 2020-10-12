@@ -2,7 +2,7 @@
 % Please edit documentation in R/another_greedy_knapsack.R
 \name{another_greedy_knapsack}
 \alias{another_greedy_knapsack}
-\title{Greedy Solution for the Knapsack Problem}
+\title{Another Greedy Solution for the Knapsack Problem}
 \usage{
 another_greedy_knapsack(x, W)
 }
@@ -15,5 +15,5 @@ another_greedy_knapsack(x, W)
 a \code{list} containing two elements: \code{value} and \code{elements}, representing the maximum value that can be realised with the given knapsack and the indices of the items to be packed in the knapsack for realising maximum value
 }
 \description{
-Greedy Solution for the Knapsack Problem
+Another Greedy Solution for the Knapsack Problem
 }

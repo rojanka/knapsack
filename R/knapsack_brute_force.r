@@ -1,5 +1,3 @@
-#' @import foreach
-#' @import doParallel
 #' @import parallel
 #' @title A Brute-Force Solution for the Knapsack Problem
 #' @param x a \code{data.frame} with two columns, "w" and "v", indicating the weight and value of items respectively
@@ -11,51 +9,57 @@
 knapsack_brute_force <- function(x, W, parallel=FALSE){
   stopifnot(inherits(x,"data.frame"))
   stopifnot(W>0)
-
+  
   if (nrow(x) > 31) stop("This implementation cannot handle knapsack
       problem involving more than 31 items")
-
+  
   if (parallel==TRUE){
-    doParallel::registerDoParallel(parallel::detectCores())
-
-    combListsMax=function(a,b){
-      if (a[[1]]>b[[1]]){
-        return(a)
-      }else{
-        return(b)
+    
+    get_combo_value <- function(i) {
+      
+      combination = which(as.logical(intToBits(i)))
+      
+      if (sum(x$w[combination])<=W) {
+        
+        return(sum(x$v[combination]))
+        
+      } else {
+        
+        return(0)
+        
       }
+      
     }
+    
+    cl <- parallel::makeCluster(parallel::detectCores())
+    parallel::clusterExport(cl, c("x", "W", "get_combo_value"), envir = environment())
+    all_combos_values <- parallel::parSapply(cl, 0:(2^(length(x$v))-1), get_combo_value)
+    parallel::stopCluster(cl)
+    
+    #closeAllConnections()
+    #gc()
+    
+    highestValue <- max(all_combos_values)
+    highestValueComb <- which(as.logical(intToBits(which(all_combos_values == highestValue)[1] - 1)))
 
-    returnList=foreach::foreach (i=0:(2^(length(x$v)) - 1), .combine=combListsMax) %dopar% {
-      if (sum(x$w[which(as.logical(intToBits(i)))])<=W){
-        return(list(value=sum(x$v[which(as.logical(intToBits(i)))]), elements=which(as.logical(intToBits(i)))))
-      }else{
-        return(list(value=0,elements=c()))
-      }
-    }
 
   }else{
     highestValue = 0
     highestValueComb = c()
-
+    
     for(i in 0:(2^(length(x$v))-1)){
       combination = which(as.logical(intToBits(i)))
-
+      
       if ((sum(x$w[combination])<=W) & ((sum(x$v[combination])>highestValue))){
         highestValue=sum(x$v[combination])
         highestValueComb = combination
       }
-
+      
     }
-    returnList=list(value=highestValue,elements=highestValueComb)
-
+    
   }
-
-
-
-
-
-
+  
+  returnList <- list(value=highestValue,elements=highestValueComb)
   return(returnList)
-
+  
 }

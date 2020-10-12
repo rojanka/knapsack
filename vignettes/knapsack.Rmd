@@ -47,7 +47,7 @@ If no errors are encountered, each package function outputs a list containing tw
 1. __value__: a numeric scalar, which is the maximum value (see note) that can be realised given items and knapsack capacity
 2. __elements__: a vector of the indices of items to be included in the knapsack in order to realise the said maximum _value_
 
-__Note__: Brute-force and dynamic programming methods are guaranteed to generate a global maximum value, whereas greedy methods generate a local maximum value that are guaranteed, in the worst case, be half the global maximum value. See cited references for more details.
+__Note__: Brute-force and dynamic programming methods are guaranteed to generate a global maximum value, whereas greedy methods generate a local maximum value that is guaranteed, in the worst case, be half that of the global maximum value. See cited references for more details.
 
 # Package Solutions
 ## Function implementing a Brute-Force Solution (without Parallelisation)
@@ -67,11 +67,15 @@ system.time(knapsack_brute_force(x[1:16, ], 2000))
 The _knapsack_brute_force_ function described above also takes on an optional argument _'parallel'_ whose value is set to _FALSE_ by default. Forcing it to _TRUE_ however invokes the parallelised version of the above mentioned brute-force solution. If the machine running the function has suitable computing hardware and if there are a sufficiently large number of objects to choose from, then despite the function still having time complexity of order _O(2^n)_, parallelisation will deliver significantly faster execution.
 
 ``` {r, eval = FALSE}
-system.time(knapsack_brute_force(x[1:30, ], 2000, parallel = TRUE))
-system.time(knapsack_brute_force(x[1:30, ], 2000))
+system.time(knapsack_brute_force(x[1:21, ], 2000))
+system.time(knapsack_brute_force(x[1:21, ], 2000, parallel = TRUE))
 ```
 
-__Note__: The above two lines of code are cannot be run as part of this vignette as their runtimes are large; they are being shown here merely as examples that can, in general, be run.
+Note that the above two lines of code cannot be run as part of this vignette, as current CRAN principles do not allow for package vignettes to use more than two processor cores for computation. Our implementation, on the other hand, makes use of as many processor cores as are available. The above lines of code are being shown in this vignette merely as examples that can, in general, be run. To give you a sense of the performance gain involved, below are images of runs of the parallelised and non-parallelised versions of the brute force based algorithm on a device whose specs are as shown below.
+
+![Performance Gain via Parallelisation](performance_gain.png){width=50%}
+
+![Device / OS Specs](device_OS_specs.png){width=25%}
 
 ## Function implementing a Dynamic Programming based Solution
 The __knapsack_dynamic__ function solves the knapsack problem using dynamic programming, as outlined in several texts (see references). 
@@ -80,24 +84,38 @@ The __knapsack_dynamic__ function solves the knapsack problem using dynamic prog
 knapsack_dynamic(x[1:8, ], 3500)
 ```
 
-This function has time complexity of order _O(n*W)_, where _n_ is the number of items that can potentially be included in the knapsack and _W_ is the knapsack capacity. One can therefore expect faster execution as compared to a single processor Brute Force implementation. For n = 500 items and knapsack capacity W = 2000, we can see below the time taken for function execution.
+This function has time complexity of order _O(n.W)_, where _n_ is the number of items that can potentially be included in the knapsack and _W_ is the knapsack capacity. One can therefore expect faster execution as compared to a single processor Brute Force implementation. For n = 500 items and knapsack capacity W = 2000, we can see below the time taken for function execution.
 
 ``` {r}
 system.time(knapsack_dynamic(x[1:500, ], 2000))
 ```
 
 ## Function implementing a Greedy Approach
-The function __greedy_knapsack__ uses a [greedy approach](https://en.wikipedia.org/wiki/Greedy_algorithm) which, as cited in the literature we reference below, consists of sorting available items in descending order of their value per unit weight and including in the knapsack as many of the top-most items as it can possibly hold. Although this approach may not provide the most optimal solution to the problem, its solution is guaranteed (as also cited in the literature referenced) to generate knapsack value that is, at worst, half of the maximum possible value that can possibly be generated with the given objects and knapsack capacity.
+The function __greedy_knapsack__ uses a [greedy approach](https://en.wikipedia.org/wiki/Greedy_algorithm) which, as cited in the literature we reference below, consists of sorting available items in descending order of their value per unit weight and including in the knapsack as many of the top-most items as it can possibly hold. Although this approach may not provide the most optimal solution to the problem, its solution is guaranteed (as also cited in the literature referenced) to generate knapsack value that is, at worst, half of the maximum value that can possibly be generated with the given objects and knapsack capacity.
 
 ``` {r}
 greedy_knapsack(x[1:8, ], 3500)
 ```
 
-This function has time complexity of order _O(n*log(n))_, where _n_ is the number of items that can potentially be included in the knapsack. This follows from the fact that the complexity of the sorting operation overwhelms the sum of complexities of all the other operations in the procedure. One can therefore expect faster execution even in comparison to Dynamic Programming based implementations. For n = 1,000,000 items and knapsack capacity W = 2000, we can see below the time taken for function execution.
+This function has time complexity of order _O(n.log(n))_, where _n_ is the number of items that can potentially be included in the knapsack. This follows from the fact that the complexity of the sorting operation overwhelms the sum of complexities of all the other operations in the procedure. One can therefore expect faster execution even in comparison to Dynamic Programming based implementations. For n = 1,000,000 items and knapsack capacity W = 2000, we can see below the time taken for function execution.
 
 ``` {r}
 system.time(greedy_knapsack(x[1:1000000, ], 2000))
 ```
+
+### Profiling and optimising the Greedy Approach Function
+Profiling using the [profvis](https://rstudio.github.io/profvis/) package helped optimise our __greedy_knapsack__ function. Profiles revealed a bottleneck wherein the input data.frame of knapsack objects was being sorted. Thereafter, we created another version of the greedy function which used sorted row indices in place of the sorted data.frame. This brought in over 2x performance gain.
+
+``` {r}
+system.time(another_greedy_knapsack(x[1:1000000, ], 2000))
+```
+
+![Profile of the Sub-optimal Greedy Function - Bottleneck Highlighted](suboptimal_greedy.png){length=50%, width=50%}
+
+![Profile of the Optimised Greedy Function](optimised_greedy.png){length=50%, width=50%}
+
+# Conclusion
+Among the multiple solutions we have made available through the ["knapsack"](https://github.com/rojanka/knapsack) package, the brute-force based function, __"knapsack_brute_force"__ is the slowest. Parallelisation improves speed of execution, but the inherent high time complexity of the algorithm, makes it less efficient than the __"knapsack_dynamic"__ function. Dynamic programming brings down algorithm time complexity, but can still take a large amount of time for execution if there a very large number of objects to choose from. In such a case, the function __"another_greedy_knapsack"__ will deliver best performance in terms of speed of execution, but at the cost of some accuracy.
 
 # References
 1. [Knapsack Problem - Wikipedia](https://en.wikipedia.org/wiki/Knapsack_problem)
